@@ -2,7 +2,7 @@
 
 module LookupTable where 
 
-type Table a b = [(a, b)] 
+type Table a b = [(a, b)]
 
 create :: Table a b 
 create = []
@@ -10,8 +10,8 @@ create = []
 upd :: Eq a => (a, b) -> Table a b -> Table a b 
 upd x [] = [x]
 upd x (x' : xs) 
-    | fst x == fst x' = (fst x, snd x) : xs   
-    | otherwise = x' : (upd x xs) 
+    | fst x == fst x' = x : xs   
+    | otherwise = x' : upd x xs
 
 lkup :: Eq a => a -> Table a b -> Maybe b
 lkup k [] = Nothing
