@@ -6,7 +6,6 @@
 module Practico0 where
 
 import LookupTable
-import Tests.HUnit
 
 type X = String 
 
@@ -135,5 +134,3 @@ prettify (Inclusion e1 e2) = "[" ++ prettify e1 ++ "]" ++ " ⊆ " ++ "[" ++ pret
 print_expr :: Expr -> IO () 
 print_expr = putStrLn . prettify
 
-
-import Test.HUnit
