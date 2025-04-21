@@ -2,7 +2,6 @@
 
 module Chi where
 
-import Distribution.Simple.Program.HcPkg (list)
 import LookupTable
 
 type K = String -- Constructor
@@ -16,6 +15,7 @@ data E
   | Ap E E
   | Case E [B]
   | Rec X E
+  | If E E E 
   deriving (Show, Eq)
 
 data B = Rama K [X] E
@@ -60,6 +60,7 @@ efectoS s (Lambda x e) = Lambda x $ efectoS (del x s) e
 efectoS s (Ap e1 e2) = Ap (efectoS s e1) (efectoS s e2)
 efectoS s (Case e bs) = Case (efectoS s e) $ map (efectoSRama s) bs
 efectoS s (Rec x e) = Rec x $ efectoS (del x s) e
+efectoS s (If e1 e2 e3) = If (efectoS s e1) (efectoS s e2) (efectoS s e3)
 
 listsToTuples :: [a] -> [b] -> [(a, b)]
 listsToTuples [] ys = []
@@ -81,6 +82,9 @@ evalParcial (Case e bs) = case evalParcial e of
           efectoS (listsToTuples xs es) e'
     Nothing -> error $ "No se logro cubrir el caso para el constructor: " ++ k
 evalParcial (Rec x e) = evalParcial $ efectoS [(x, Rec x e)] e
+evalParcial (If e1 e2 e3) = case evalParcial e1 of 
+    ConsW "True" [] -> evalParcial e2
+    ConsW "False" [] -> evalParcial e3
 
 eval :: E -> V 
 eval e = case evalParcial e of 
@@ -115,8 +119,34 @@ chiTriple = undefined
 -- duplicar -- 
 -- ramaC -- 
 -- zeros -- 
--- takes -- 
+zeros :: E 
+zeros = Rec "zeros" $ Cons ":" [Cons "O" [], Var "zeros"]
 
+-- takes -- 
+takes :: E 
+takes = Rec "takes" $ Lambda "x" $ Lambda "l" $ Case (Var "l") [
+        Rama ":" ["x'", "xs'"] (Case (Var "x") [
+            Rama "O" [] (Cons "[]" []),
+            Rama "S" ["y"] (Cons ":" [
+                Var "x'",
+                Ap (Ap (Var "takes") (Var "y")) (Var "xs'")
+            ])
+        ]),
+        Rama "[]" [] (Cons "[]" [])
+    ]
+
+
+n :: Int -> E 
+n 0 = Cons "O" []
+n x = Cons "S" [n (x - 1)]
+
+nZeros :: Int -> V
+nZeros 0 = ConsV "[]" []
+nZeros x = ConsV ":" [ConsV "O" [], nZeros (x - 1)]
+
+takesTest :: Int -> [(E, V)] 
+takesTest (-1) = []
+takesTest x = (Ap (Ap takes (n x)) zeros, nZeros x) : takesTest (x - 1)
     
 validateTests :: [(E, V)] -> Bool
 validateTests = foldr (\(t, r) -> (&&) (eval t == r)) True 
