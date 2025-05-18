@@ -86,10 +86,10 @@ evalParcial (If e1 e2 e3) = case evalParcial e1 of
     ConsW "True" [] -> evalParcial e2
     ConsW "False" [] -> evalParcial e3
 
-eval :: E -> V 
-eval e = case evalParcial e of 
-    ConsW k es -> ConsV k $ map eval es
-    LambdaW x e' -> LambdaV x e'
+eval :: E -> V
+eval e = case evalParcial e of
+  ConsW k es -> ConsV k $ map eval es
+  LambdaW x e' -> LambdaV x e'
 
 {-
 
@@ -98,23 +98,45 @@ eval e = case evalParcial e of
 -}
 
 -- OR --
-chiOr :: E 
-chiOr = Lambda "x" $ Lambda "y" $ Case (Var "x") [
-        Rama "True" [] (Var "y"), 
-        Rama "False" [] (Cons "False" []) 
-    ]
+chiOr :: E
+chiOr =
+  Lambda "x" $
+    Lambda "y" $
+      Case
+        (Var "x")
+        [ Rama "True" [] (Var "y"),
+          Rama "False" [] (Cons "False" [])
+        ]
 
 testsChiOr :: [(E, V)]
-testsChiOr = [
-        (Ap (Ap chiOr $ Cons "False" []) $ Cons "False" [], ConsV "False" []),
-        (Ap (Ap chiOr $ Cons "True" []) $ Cons "False" [], ConsV "False" []),
-        (Ap (Ap chiOr $ Cons "False" []) $ Cons "True" [], ConsV "False" []),
-        (Ap (Ap chiOr $ Cons "True" []) $ Cons "True" [], ConsV "True" [])
+testsChiOr =
+  [ (Ap (Ap chiOr $ Cons "False" []) $ Cons "False" [], ConsV "False" []),
+    (Ap (Ap chiOr $ Cons "True" []) $ Cons "False" [], ConsV "False" []),
+    (Ap (Ap chiOr $ Cons "False" []) $ Cons "True" [], ConsV "False" []),
+    (Ap (Ap chiOr $ Cons "True" []) $ Cons "True" [], ConsV "True" [])
+  ]
+
+-- n -- 
+chiN :: Int -> E 
+chiN 0 = Cons "Z" []
+chiN n = Cons "S" [chiN (n - 1)]
+
+chiVN :: Int -> V 
+chiVN 0 = ConsV "Z" []
+chiVN n = ConsV "S" [chiVN (n - 1)]
+
+-- triple --
+triple :: E
+triple = Rec "triple" $ Lambda "x" $ Case (Var "x") [ 
+        Rama "Z" [] (Cons "Z" []),
+        Rama "S" ["y"] (
+            Cons "S" [Cons "S" [Cons "S" [Ap (Var "triple") (Var "y")]]]
+        )
     ]
 
--- triple -- 
-chiTriple :: E 
-chiTriple = undefined
+generateTripleTests :: Int -> [(E, V)] 
+generateTripleTests 0 = [(Ap triple $ chiN 0, chiVN 0)]
+generateTripleTests n = (Ap triple $ chiN n, chiVN (n * 3)) : generateTripleTests (n - 1)
 
 -- duplicar -- 
 -- ramaC -- 
@@ -148,5 +170,17 @@ takesTest :: Int -> [(E, V)]
 takesTest (-1) = []
 takesTest x = (Ap (Ap takes (n x)) zeros, nZeros x) : takesTest (x - 1)
     
+testsTriple :: [(E, V)]
+testsTriple = generateTripleTests 4
+
+-- duplicar --
+duplicar :: E 
+duplicar = Rec "duplicar" $ Lambda "l" $ Case (Var "l") [
+        Rama ":" ["x", "xs"] (
+            Cons ":" [Var "x", Cons ":" [Var "x", Ap (Var "duplicar") (Var "xs")]]
+            ), 
+        Rama "[]" [] (Cons "[]" [])
+    ]
+
 validateTests :: [(E, V)] -> Bool
-validateTests = foldr (\(t, r) -> (&&) (eval t == r)) True 
+validateTests = foldr (\(t, r) -> (&&) (eval t == r)) True
