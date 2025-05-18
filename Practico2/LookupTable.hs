@@ -8,9 +8,7 @@ create :: Tabla a b
 create = []
 
 update :: Eq a => Tabla a b -> [(a, b)]  -> Tabla a b 
--- update = foldr upd 
-update m (t : ts) = update (upd t m) ts -- esta aca el error
-update m [] = m
+update = foldr upd 
 
 upd :: Eq a => (a, b) -> Tabla a b -> Tabla a b 
 upd t [] = [t]

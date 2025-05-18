@@ -49,7 +49,7 @@ promote :: V -> E
 promote (ConsV c vs) = Cons c (map promote vs) 
 
 execute :: Prog -> M -> M
-execute (Asig xs es) m = update (zip xs vs) m
+execute (Asig xs es) m = update m (zip xs vs) 
   where
     vs = map (eval m) es
 execute (Local xs p) m = bajas (execute p $ alta m xs) xs
