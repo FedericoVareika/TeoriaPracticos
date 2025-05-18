@@ -80,6 +80,18 @@ find p (x : xs)
 
 -- 5) Programar en Imp 
 
+-----Unit Testing------
+
+validateTest :: (Prog, M, V) -> Bool 
+validateTest (t, m, r) = case lkup "result" (execute t m) of 
+    Nothing -> False
+    Just r' -> r == r'
+
+validateTests :: [(Prog, M, V)] -> Bool
+validateTests = foldr (\test -> (&&) (validateTest test)) True
+
+-----------------------
+
 -----Helpers------
 
 notImp :: Prog
@@ -109,11 +121,5 @@ parTests = [
         (par, [("n", vN 3)], ConsV "False" [])
     ]
 
-validateTest :: (Prog, M, V) -> Bool 
-validateTest (t, m, r) = case lkup "result" (execute t m) of 
-    Nothing -> False
-    Just r' -> r == r'
 
-validateTests :: [(Prog, M, V)] -> Bool
-validateTests = foldr (\test -> (&&) (validateTest test)) True
 
